@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CDSL2_Bài 6_Một số định dạng dữ liệu</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(120deg, #fff5f8 0%, #f4fffb 52%, #fffdf2 100%);
+      color: #2d3436;
+      padding: 18px;
+    }
+
+    .app-container {
+      max-width: 1220px;
+      margin: 0 auto;
+    }
+
+    .top-header {
+      font-size: 15px;
+      color: #636e72;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    /* Thanh trạng thái */
+    .hud-bar {
+      background: #ffffff;
+      border: 2px solid #f8d7e3;
+      border-radius: 22px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+      margin-bottom: 20px;
+    }
+
+    .hud-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .score-badge {
+      background: #fff3cd;
+      border: 2px solid #f7d070;
+      color: #4a3b00;
+    }
+
+    .streak-badge {
+      background: #e3f9ee;
+      border: 2px solid #68d391;
+      color: #14532d;
+    }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timer-badge {
+      background: #ffe6ee;
+      border: 2px solid #f9b4cb;
+      color: #d6336c;
+      padding: 9px 16px;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn-reset {
+      background: #f1f3f5;
+      border: 2px solid #dee2e6;
+      color: #343a40;
+      padding: 9px 14px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .btn-reset:hover {
+      background: #e9ecef;
+    }
+
+    /* Khu vực chính */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Khung danh sách tập tin */
+    .files-panel {
+      background: rgba(255, 255, 255, 0.72);
+      border: 2px solid #f6df7e;
+      border-radius: 24px;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    @media (max-width: 520px) {
+      .files-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .file-card {
+      background: #fffdf5;
+      border: 2px solid #f7df79;
+      border-radius: 18px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: grab;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .file-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .file-card.selected {
+      border-color: #228be6;
+      background: #edf7ff;
+      box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.25);
+    }
+
+    .file-card.wrong {
+      animation: shake 0.35s ease;
+      border-color: #fa5252;
+      background: #fff5f5;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .file-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1.5px solid #e9ecef;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .file-name {
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    /* Các cột phân loại */
+    .drop-zone {
+      min-height: 460px;
+      border-radius: 24px;
+      border: 2px dashed #ccc;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.65);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .drop-zone.drag-over {
+      transform: scale(1.015);
+      background: #ffffff;
+    }
+
+    .zone-image {
+      border-color: #f48fb1;
+      background: #fff7fa;
+    }
+
+    .zone-text {
+      border-color: #69db7c;
+      background: #f4fdf7;
+    }
+
+    .zone-video {
+      border-color: #ffd43b;
+      background: #fffdf0;
+    }
+
+    .zone-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1.5px solid rgba(0, 0, 0, 0.07);
+    }
+
+    .zone-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .zone-image .zone-title-wrap { color: #d6336c; }
+    .zone-text .zone-title-wrap { color: #2b8a3e; }
+    .zone-video .zone-title-wrap { color: #d97706; }
+
+    .zone-count {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      background: #ffffff;
+    }
+
+    .zone-image .zone-count { color: #d6336c; border: 1.5px solid #f8bbd0; }
+    .zone-text .zone-count { color: #2b8a3e; border: 1.5px solid #b2f2bb; }
+    .zone-video .zone-count { color: #d97706; border: 1.5px solid #ffe066; }
+
+    .zone-hint {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 24px;
+      opacity: 0.85;
+    }
+
+    .zone-image .zone-hint { color: #d6336c; }
+    .zone-text .zone-hint { color: #2f9e44; }
+    .zone-video .zone-hint { color: #e67700; }
+
+    .placed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .placed-item {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Thông báo hoàn thành lượt */
+    .win-banner {
+      display: none;
+      margin-top: 20px;
+      background: #ffffff;
+      border: 2.5px solid #40c057;
+      border-radius: 22px;
+      padding: 18px 22px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: 0 10px 24px rgba(64, 192, 87, 0.15);
+    }
+
+    .win-banner.show {
+      display: flex;
+    }
+
+    .win-text h3 {
+      margin: 0 0 4px 0;
+      color: #2b8a3e;
+      font-size: 20px;
+    }
+
+    .win-text p {
+      margin: 0;
+      color: #495057;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .btn-next-round {
+      background: #2f9e44;
+      color: #ffffff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-next-round:hover {
+      background: #2b8a3e;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="top-header">CDSL2_Bài 6_Một số định dạng dữ liệu</div>
+
+    <div class="hud-bar">
+      <div class="hud-left">
+        <div class="badge score-badge">
+          <span>⭐</span>
+          <span id="scoreText">Điểm: 0 / 50</span>
+        </div>
+        <div class="badge streak-badge">
+          <span>🏆</span>
+          <span id="completedRoundsText">Lượt làm đúng: 0</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="timer-badge">
+          <span>⏱️</span>
+          <span id="timerText">00:00</span>
+        </div>
+        <button class="btn-reset" type="button" onclick="resetRound(false)">Làm lại</button>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="files-panel" id="filesPanel"></div>
+
+      <div class="drop-zone zone-image" data-category="image" onclick="handleZoneClick('image')">
+        <div class="zone-header">
+          <div class="zone-title-wrap"><span>🖼️</span><span>Hình ảnh</span></div>
+          <span class="zone-count" id="count-image">0</span>
+        </div>
+        <div class="placed-list" id="list-image"></div>
+        <div class="zone-hint" id="hint-image">Thả hoặc chạm vào đây</div>
+      </div>
+
+      <div class="drop-zone zone-text" data-category="text" onclick="handleZoneClick('text')">
+        <div class="zone-header">
+          <div class="zone-title-wrap"><span>📝</span><span>Văn bản</span></div>
+          <span class="zone-count" id="count-text">0</span>
+        </div>
+        <div class="placed-list" id="list-text"></div>
+        <div class="zone-hint" id="hint-text">Thả hoặc chạm vào đây</div>
+      </div>
+
+      <div class="drop-zone zone-video" data-category="video" onclick="handleZoneClick('video')">
+        <div class="zone-header">
+          <div class="zone-title-wrap"><span>🎬</span><span>Video</span></div>
+          <span class="zone-count" id="count-video">0</span>
+        </div>
+        <div class="placed-list" id="list-video"></div>
+        <div class="zone-hint" id="hint-video">Thả hoặc chạm vào đây</div>
+      </div>
+    </div>
+
+    <div class="win-banner" id="winBanner">
+      <div class="win-text">
+        <h3>🎉 Tuyệt vời! Em đã phân loại đúng toàn bộ tập tin!</h3>
+        <p id="winSummary">Tổng số lượt làm đúng: 1</p>
+      </div>
+      <button class="btn-next-round" type="button" onclick="resetRound(true)">Chơi lượt tiếp theo</button>
+    </div>
+  </div>
+
+  <script>
+    const FILES = [
+      { id: "f1", name: "tiet-muc-mua.mp4", category: "video", icon: "💃" },
+      { id: "f2", name: "chu-cho-nho.jng", category: "image", icon: "🐶" },
+      { id: "f3", name: "ngoi-nha-mo-uoc.png", category: "image", icon: "🏠" },
+      { id: "f4", name: "meocon.jpg", category: "image", icon: "🐱" },
+      { id: "f5", name: "co-viet-nam.jpg", category: "image", icon: "VN" },
+      { id: "f6", name: "chuyen-di-so-thu.mp4", category: "video", icon: "🦒" },
+      { id: "f7", name: "bai-tho-mua-thu.doc", category: "text", icon: "🍂" },
+      { id: "f8", name: "chuc-mung-me.avi", category: "video", icon: "💐" },
+      { id: "f9", name: "ke-hoach-lop.docx", category: "text", icon: "📋" },
+      { id: "f10", name: "phieu-toan-lop-2.pdf", category: "text", icon: "🧮" }
+    ];
+
+    const POINTS_PER_FILE = 5;
+    const TOTAL_SCORE = FILES.length * POINTS_PER_FILE;
+
+    let score = 0;
+    let completedRounds = 0;
+    let hadMistakeInRound = false;
+    let roundCounted = false;
+    let selectedFileId = null;
+    let secondsElapsed = 0;
+    let timerInterval = null;
+
+    function formatTime(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        secondsElapsed++;
+        document.getElementById("timerText").textContent = formatTime(secondsElapsed);
+      }, 1000);
+    }
+
+    function updateHUD() {
+      document.getElementById("scoreText").textContent = `Điểm: ${score} / ${TOTAL_SCORE}`;
+      document.getElementById("completedRoundsText").textContent = `Lượt làm đúng: ${completedRounds}`;
+    }
+
+    function updateZoneCounts() {
+      ["image", "text", "video"].forEach((cat) => {
+        const count = document.getElementById(`list-${cat}`).children.length;
+        document.getElementById(`count-${cat}`).textContent = count;
+        document.getElementById(`hint-${cat}`).style.display = count > 0 ? "none" : "block";
+      });
+    }
+
+    function renderFiles() {
+      const panel = document.getElementById("filesPanel");
+      panel.innerHTML = "";
+
+      FILES.forEach((file) => {
+        const card = document.createElement("div");
+        card.className = "file-card";
+        card.id = `card-${file.id}`;
+        card.draggable = true;
+        card.dataset.id = file.id;
+
+        if (selectedFileId === file.id) {
+          card.classList.add("selected");
+        }
+
+        card.innerHTML = `
+          <div class="file-icon">${file.icon}</div>
+          <div class="file-name">${file.name}</div>
+        `;
+
+        card.addEventListener("dragstart", (e) => {
+          selectedFileId = file.id;
+          e.dataTransfer.setData("text/plain", file.id);
+        });
+
+        card.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectedFileId = selectedFileId === file.id ? null : file.id;
+          renderFiles();
+        });
+
+        panel.appendChild(card);
+      });
+    }
+
+    function tryPlaceFile(fileId, targetCategory) {
+      const file = FILES.find((f) => f.id === fileId);
+      const card = document.getElementById(`card-${fileId}`);
+      if (!file || !card) return;
+
+      if (file.category === targetCategory) {
+        score += POINTS_PER_FILE;
+        selectedFileId = null;
+        card.remove();
+
+        const placedEl = document.createElement("div");
+        placedEl.className = "placed-item";
+        placedEl.innerHTML = `<span>${file.icon}</span><span>${file.name}</span>`;
+        document.getElementById(`list-${targetCategory}`).appendChild(placedEl);
+
+        updateHUD();
+        updateZoneCounts();
+        checkRoundCompletion();
+      } else {
+        // Nếu HS kéo thả nhầm: đánh dấu lượt này có sai (nếu muốn đếm cả lượt làm đúng toàn bộ sau khi sửa xong thì bỏ dòng hadMistakeInRound)
+        hadMistakeInRound = true;
+        card.classList.add("wrong");
+        setTimeout(() => card.classList.remove("wrong"), 360);
+      }
+    }
+
+    function checkRoundCompletion() {
+      if (score === TOTAL_SCORE && !roundCounted) {
+        roundCounted = true;
+        completedRounds += 1;
+        updateHUD();
+
+        document.getElementById("winSummary").textContent =
+          `Hoàn thành trong ${formatTime(secondsElapsed)} • Tổng số lượt làm đúng: ${completedRounds}`;
+        document.getElementById("winBanner").classList.add("show");
+      }
+    }
+
+    function handleZoneClick(category) {
+      if (!selectedFileId) return;
+      tryPlaceFile(selectedFileId, category);
+    }
+
+    function initDropZones() {
+      document.querySelectorAll(".drop-zone").forEach((zone) => {
+        zone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          zone.classList.add("drag-over");
+        });
+
+        zone.addEventListener("dragleave", () => {
+          zone.classList.remove("drag-over");
+        });
+
+        zone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          zone.classList.remove("drag-over");
+          const fileId = e.dataTransfer.getData("text/plain") || selectedFileId;
+          if (fileId) {
+            tryPlaceFile(fileId, zone.dataset.category);
+          }
+        });
+      });
+    }
+
+    function resetRound(keepTimer = false) {
+      score = 0;
+      hadMistakeInRound = false;
+      roundCounted = false;
+      selectedFileId = null;
+
+      ["image", "text", "video"].forEach((cat) => {
+        document.getElementById(`list-${cat}`).innerHTML = "";
+      });
+
+      document.getElementById("winBanner").classList.remove("show");
+
+      if (!keepTimer) {
+        secondsElapsed = 0;
+        document.getElementById("timerText").textContent = "00:00";
+        startTimer();
+      }
+
+      updateHUD();
+      updateZoneCounts();
+      renderFiles();
+    }
+
+    initDropZones();
+    renderFiles();
+    updateHUD();
+    updateZoneCounts();
+    startTimer();
+  </script>
+</body>
+</html>
